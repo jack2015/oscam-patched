@@ -2171,7 +2171,7 @@ static void dvbapi_parse_cat_ca_descriptor(int32_t demux_id, const uint8_t *buff
 		case 0x27:
 		case 0x4A:
 		{
-			if(caid_is_bulcrypt(ca_system_id))
+			if(!caid_is_dre(ca_system_id))
 			{
 				dvbapi_add_emmpid(demux_id, ca_system_id, ca_pid, 0, 0, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 				break;
@@ -2572,6 +2572,8 @@ void dvbapi_stop_descrambling(int32_t demux_id, uint32_t msgid)
 
 int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked, uint32_t msgid)
 {
+	uint32_t table = 0x80;
+	uint32_t mask = 0xF0;
 	int32_t started = 0; // in case ecmfilter started = 1
 	int32_t fake_ecm = 0;
 	ECM_REQUEST *er;
@@ -2716,13 +2718,19 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked,
 				demux[demux_id].ECMpids[pid].VPID);
 
 			demux[demux_id].curindex = pid; // set current pid to the fresh started one
+			table = 0x80;
+			mask = 0xF0;
+			if(caid_is_dvn(demux[demux_id].ECMpids[pid].CAID)){
+				table = 0x50;
+				mask = 0xFF;
+			}
 			dvbapi_start_filter(demux_id,
 						pid,
 						demux[demux_id].ECMpids[pid].ECM_PID,
 						demux[demux_id].ECMpids[pid].CAID,
 						demux[demux_id].ECMpids[pid].PROVID,
-						0x80,
-						0xF0,
+						table,
+						mask,
 						3000,
 						TYPE_ECM);
 
@@ -2765,13 +2773,19 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked,
 			}
 
 			demux[demux_id].curindex = pid; // set current pid to the fresh started one
+			table = 0x80;
+			mask = 0xF0;
+			if(caid_is_dvn(demux[demux_id].ECMpids[pid].CAID)){
+				table = 0x50;
+				mask = 0xFF;
+			}
 			dvbapi_start_filter(demux_id,
 						pid,
 						demux[demux_id].ECMpids[pid].ECM_PID,
 						demux[demux_id].ECMpids[pid].CAID,
 						demux[demux_id].ECMpids[pid].PROVID,
-						0x80,
-						0xF0,
+						table,
+						mask,
 						3000,
 						TYPE_ECM);
 
@@ -3012,6 +3026,7 @@ void dvbapi_read_priority(void)
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		if(type == 's')
 		{
+
 			cs_strncpy(entry->devname, str1, sizeof(entry->devname));
 			cs_strncpy(entry->pmtfile, str1 + 64, sizeof(entry->pmtfile));
 			entry->disablefilter = disablefilter;
@@ -5629,7 +5644,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 				return;
 			}
 
-			if(!(buffer[0] == 0x80 || buffer[0] == 0x81))
+			if(!(buffer[0] == 0x80 || buffer[0] == 0x81 || (caid_is_dvn(curpid->CAID) && buffer[0] == 0x50)))
 			{
 				cs_log_dbg(D_DVBAPI, "Received an ECM with invalid ecmtable ID %02X -> ignoring!", buffer[0]);
 				if(curpid)
@@ -5657,7 +5672,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 			}
 #endif
 			// wait for odd / even ecm change (only not for irdeto!)
-			if((curpid->table == buffer[0] && !caid_is_irdeto(curpid->CAID)) || pvu_skip)
+			if((curpid->table == buffer[0] && !caid_is_irdeto(curpid->CAID) && !caid_is_dvn(curpid->CAID)) || pvu_skip)
 			{
 				if(!(er = get_ecmtask()))
 				{
@@ -5793,7 +5808,10 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uint8_t *buffer,
 
 		// check for matching chid (unique ecm part in case of non-irdeto cas)
 		// plus added fix for seca2 monthly changing fakechid
-		if((curpid->CHID < 0x10000) && !((chid == curpid->CHID) || ((curpid->CAID >> 8 == 0x01) && (chid & 0xF0FF) == (curpid->CHID & 0xF0FF))))
+		if((curpid->CHID < 0x10000) && !( (chid == curpid->CHID)
+				|| ((curpid->CAID >> 8 == 0x01) && (chid&0xF0FF) == (curpid->CHID&0xF0FF))
+				|| caid_is_dvn(curpid->CAID)
+				|| caid_is_streamguard(curpid->CAID) ) )
 		{
 			if(caid_is_irdeto(curpid->CAID))
 			{
@@ -8232,7 +8250,14 @@ int32_t dvbapi_set_section_filter(int32_t demux_id, ECM_REQUEST *er, int32_t n)
 		ecmfilter = 0x80; // current processed ecm is odd, next will be filtered for even
 	}
 
-	if(curpid->table != 0) // cycle ecmtype from odd to even or even to odd
+	if(caid_is_dvn(er->caid))
+	{
+		filter[0] = 0x50; // set filter to wait for any ecms
+		mask[0] = 0xFF;
+		cs_log_dbg(D_DVBAPI, "Demuxer %d Filter %d set ecmtable to %s (CAID %04X PROVID %06X FD %d)", demux_id, n + 1,
+				   "EVEN+ODD", curpid->CAID, curpid->PROVID, fd);
+	}
+	else if(curpid->table != 0)   // cycle ecmtype from odd to even or even to odd
 	{
 		filter[0] = ecmfilter; // only accept new ecms (if previous odd, filter for even and vice versa)
 		mask[0] = 0xFF;
@@ -8274,7 +8299,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_id, ECM_REQUEST *er, int32_t n)
 				break;
 
 			case 0x4A: // DRE-Crypt, Bulcrypt, Tongang and others?
-				if(!caid_is_bulcrypt(er->caid))
+				if(caid_is_dre(er->caid))
 				{
 					offset = 6;
 				}

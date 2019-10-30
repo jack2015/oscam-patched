@@ -20,12 +20,12 @@
 extern const struct s_cardsystem *cardsystems[];
 extern char *RDR_CD_TXT[];
 
-int32_t check_sct_len(const uint8_t *data, int32_t off)
+int32_t check_sct_len(const uint8_t *data, int32_t off, int32_t maxSize)
 {
 	int32_t len = SCT_LEN(data);
-	if(len + off > MAX_LEN)
+	if(len + off > maxSize)
 	{
-		cs_log_dbg(D_TRACE | D_READER, "check_sct_len(): smartcard section too long %d > %d", len, MAX_LEN - off);
+		cs_log_dbg(D_TRACE | D_READER, "check_sct_len(): smartcard section too long %d > %d", len, maxSize - off);
 		len = -1;
 	}
 	return len;
@@ -66,6 +66,9 @@ int32_t card_write(struct s_reader *reader, const uint8_t *cmd, const uint8_t *d
 		{
 			datalen = cmd[4];
 		}
+		if(reader->card_atr_length >= 13 && !memcmp(reader->card_atr + 5, "DVN TECH", 8))
+			datalen += 2;
+
 		memcpy(buf + CMD_LEN, data, datalen);
 		return (reader_cmd2icc(reader, buf, CMD_LEN + datalen, response, response_length));
 	}

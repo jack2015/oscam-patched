@@ -1592,6 +1592,7 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	if(er->tps.time < timeout) // < and NOT <=
 		{ return 0; }
 
+
 	struct timeb now;
 	cs_ftime(&now);
 
@@ -1901,7 +1902,7 @@ uint32_t get_subid(ECM_REQUEST *er)
 			break;
 
 		case 0x4A: // DRE-Crypt, Bulcrypt, Tongfang and others?
-			if(!caid_is_bulcrypt(er->caid) && !caid_is_dre(er->caid))
+			if(!caid_is_bulcrypt(er->caid) && !caid_is_dre(er->caid) && !caid_is_streamguard(er->caid))
 				{ id = b2i(2, er->ecm + 6); }
 			break;
 	}

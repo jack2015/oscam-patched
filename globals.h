@@ -1,7 +1,10 @@
 #ifndef GLOBALS_H_
 #define GLOBALS_H_
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE // needed for PTHREAD_MUTEX_RECURSIVE on some plattforms and maybe other things; do not remove
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -390,19 +393,22 @@
 // Support for multiple CWs per channel and other encryption algos
 #define WITH_EXTENDED_CW		1
 
-#if defined(READER_DRE) || defined(READER_DRECAS) || defined(READER_VIACCESS) || defined(WITH_EMU)
-#define MAX_ECM_SIZE			1024
-#define MAX_EMM_SIZE			1024
+#if defined(READER_DRE) || defined(READER_DRECAS) || defined(READER_VIACCESS) || defined(WITH_EMU) || defined(READER_JET) || defined(READER_STREAMGUARD) || defined(READER_TONGFANG)
+#define MAX_ECM_SIZE 1024
+#define MAX_EMM_SIZE 1024
+#define MAX_SCT_SIZE 1024	// smaller or equal to the minial one of MAX_ECM_SIZE and MAX_EMM_SIZE
 #else
-#define MAX_ECM_SIZE			596
-#define MAX_EMM_SIZE			512
+#define MAX_ECM_SIZE 596
+#define MAX_EMM_SIZE 512
+#define MAX_SCT_SIZE 1024	// smaller or equal to the minial one of MAX_ECM_SIZE and MAX_EMM_SIZE
 #endif
 
-#ifdef WITH_EMU
-#define CS_EMMCACHESIZE			1024	// nr of EMMs that EMU reader will cache
+#if defined(WITH_EMU) || defined(READER_JET) || defined(READER_STREAMGUARD) || defined(READER_TONGFANG)
+#define CS_EMMCACHESIZE 1024	//nr of EMMs that each reader will cache
 #else
-#define CS_EMMCACHESIZE			512		// nr of EMMs that each reader will cache
+#define CS_EMMCACHESIZE 512		// nr of EMMs that each reader will cache
 #endif
+
 #define MSGLOGSIZE				64		// size of string buffer for a ecm to return messages
 
 #define D_TRACE					0x0001	// Generate very detailed error/trace messages per routine
@@ -533,7 +539,7 @@
 #define DEFAULT_RETRYLIMIT						0
 #define DEFAULT_LB_MODE							0
 #define DEFAULT_LB_STAT_CLEANUP					336
-#define DEFAULT_UPDATEINTERVAL					240
+#define DEFAULT_UPDATEINTERVAL					120
 #define DEFAULT_LB_AUTO_BETATUNNEL				1
 #define DEFAULT_LB_AUTO_BETATUNNEL_MODE			0
 #define DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA	50
@@ -625,7 +631,7 @@ extern const char *weekdstr;
 #define DEFAULT_CC_RESHARE		-1		// Use global cfg
 #define DEFAULT_CC_IGNRSHR		-1		// Use global cfg
 #define DEFAULT_CC_STEALTH		-1		// Use global cfg
-#define DEFAULT_CC_KEEPALIVE	0
+#define DEFAULT_CC_KEEPALIVE	1
 #define DEFAULT_CC_RECONNECT	12000
 #define DEFAULT_CC_RECV_TIMEOUT	2000
 
@@ -1546,42 +1552,59 @@ struct s_reader										// contains device info, reader info and card info
 	char			*description;
 #endif
 	char			device[128];
-	uint16_t		slot;							// in case of multiple slots like sc8in1; first slot = 1
-	int32_t			handle;							// device handle
-	int64_t			handle_nr;						// device handle_nr for mutiple readers same driver
-	int32_t			fdmc;							// device handle for multicam
+	uint16_t		slot;	// in case of multiple slots like sc8in1; first slot = 1
+	int32_t			handle;	// device handle
+	int64_t			handle_nr;// device handle_nr for mutiple readers same driver
+	int32_t			fdmc;	// device handle for multicam
 	int32_t			detect;
-	int32_t			mhz;							// actual clock rate of reader in 10khz steps
-	int32_t			cardmhz;						// standard clock speed your card should have in 10khz steps; normally 357 but for Irdeto cards 600
-	int32_t			divider;						// PLL divider for internal readers
+	int32_t			mhz;	// actual clock rate of reader in 10khz steps
+	int32_t			cardmhz;// standard clock speed your card should have in 10khz steps; normally 357 but for Irdeto cards 600
+	int32_t			divider;// PLL divider for internal readers
 	int32_t			r_port;
 	char			r_usr[64];
 	char			r_pwd[64];
 	int32_t			l_port;
 	CAIDTAB			ctab;
 	uint32_t		boxid;
-	int8_t			nagra_read;						// read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only
+#ifdef READER_TONGFANG
+	uint32_t		tongfang3_calibsn;
+	uint8_t			tongfang3_commkey[8];
+#endif
+#ifdef READER_JET
+	uint8_t         jet_vendor_key[32];
+	uint8_t         jet_root_key[8];
+	uint8_t         jet_derive_key[56];
+	uint8_t         jet_auth_key[10];
+	uint8_t         jet_service_key[8];
+	uint8_t         jet_authorize_id[8];
+	uint8_t         jet_fix_ecm;// for dvn jet ,ecm head is 0x50, this option indicate if fix it to 0x80 or 0x81.
+	uint8_t         jet_resync_vendorkey;
+#endif
+#if defined(READER_STREAMGUARD) || defined(READER_TONGFANG) || defined(READER_JET)
+	uint32_t        cas_version;
+#endif
+	int8_t		nagra_read;// read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only
 	int8_t			detect_seca_nagra_tunneled_card;
 	int8_t			force_irdeto;
-	uint8_t			boxkey[16];						// n3 boxkey 8 bytes, seca sessionkey 16 bytes, viaccess camid 4 bytes
+	uint8_t			boxkey[32];// n3 boxkey 8 bytes, seca sessionkey 16 bytes, viaccess camid 4 bytes
 	uint8_t			boxkey_length;
-	uint8_t			rsa_mod[120];					// rsa modulus for nagra cards.
+	uint8_t			rsa_mod[120];// rsa modulus for nagra cards.
 	uint8_t			rsa_mod_length;
-	uint8_t			des_key[128];					// 3des key for Viaccess 16 bytes, des key for Dre 128 bytes
+	uint8_t			des_key[128];// 3des key for Viaccess 16 bytes, des key for Dre 128 bytes
 	uint8_t			des_key_length;
 	uint8_t			atr[64];
-	uint8_t			card_atr[64];					// ATR readed from card
-	int8_t			card_atr_length;				// length of ATR
-	int8_t			seca_nagra_card;				// seca nagra card
+	uint8_t			card_atr[64];// ATR readed from card
+	int8_t			card_atr_length;// length of ATR
+	int8_t			seca_nagra_card;// seca nagra card
 	int32_t			atrlen;
 	SIDTABS			sidtabs;
 	SIDTABS			lb_sidtabs;
 	uint8_t			hexserial[8];
 	int32_t			nprov;
 	uint8_t			prid[CS_MAXPROV][8];
-	uint8_t			sa[CS_MAXPROV][4];				// viaccess & seca
-	uint8_t			read_old_classes;				// viaccess
-	uint8_t			maturity;						// viaccess & seca maturity level
+	uint8_t			sa[CS_MAXPROV][4];// viaccess & seca
+	uint8_t			read_old_classes;// viaccess
+	uint8_t			maturity;	// viaccess & seca maturity level
 	uint16_t		caid;
 	uint16_t		b_nano;
 	uint16_t		s_nano;
@@ -2231,7 +2254,7 @@ struct s_config
 	int32_t			dvbapi_listenport;				// TCP port to listen instead of camd.socket (network mode, default=0 -> disabled)
 	SIDTABS			dvbapi_sidtabs;
 	int32_t			dvbapi_delayer;					// delayer ms, minimum time to write cw
-	int8_t			dvbapi_ecminfo_file;			// Enable or disable ecm.info file creation
+	int8_t          	dvbapi_ecminfo_file;            		// Enable or disable ecm.info file creation
 	int8_t			dvbapi_ecminfo_type;
 	int8_t			dvbapi_read_sdt;
 	int8_t			dvbapi_write_sdt_prov;
@@ -2467,6 +2490,9 @@ static inline bool caid_is_betacrypt(uint16_t caid) { return caid >> 8 == 0x17; 
 static inline bool caid_is_nagra(uint16_t caid) { return caid >> 8 == 0x18; }
 static inline bool caid_is_bulcrypt(uint16_t caid) { return caid == 0x5581 || caid == 0x4AEE; }
 static inline bool caid_is_dre(uint16_t caid) { return caid == 0x4AE0 || caid == 0x4AE1 || caid == 0x2710;}
+static inline bool caid_is_streamguard(uint16_t caid) { return caid == 0x4AD2 || caid == 0x4AD3; }
+static inline bool caid_is_dvn(uint16_t caid) { return caid == 0x4A30; }
+static inline bool caid_is_tongfang(uint16_t caid) { return (caid == 0x4A02) || (caid >= 0x4B00 && caid <= 0x4BFF); }
 const char *get_cardsystem_desc_by_caid(uint16_t caid);
 
 #ifdef WITH_EMU

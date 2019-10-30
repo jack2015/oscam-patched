@@ -31,6 +31,8 @@
         PERM_OP(l,r,tt, 4,0x0f0f0f0fL); \
         }
 
+#if !defined(WITH_LIBCRYPTO) || WITH_LIBCRYPTO == 0
+
 //OPENSSL_GLOBAL const DES_LONG DES_SPtrans[8][64] =
 const DES_LONG DES_SPtransOSEMU[8][64] =
 {
@@ -572,7 +574,7 @@ void DES_encrypt1OSEMU(DES_LONG *data, DES_key_schedule *ks, int enc)
 	l = r = t = u = 0;
 }
 
-
+#endif
 
 static void mdc2_body(MDC2_CTX *c, const unsigned char *in, size_t len);
 int MDC2_Init(MDC2_CTX *c)
