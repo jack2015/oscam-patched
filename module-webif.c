@@ -2815,6 +2815,29 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	if(rdr->detect_seca_nagra_tunneled_card)
 		{ tpl_addVar(vars, TPLADD, "NAGRADETECTSECACARDCHECKED", "checked"); }
 
+#if defined(READER_STREAMGUARD) || defined(READER_TONGFANG) || defined(READER_JET)
+	tpl_printf(vars, TPLADD, "CASVERSION",  "%ld", rdr->cas_version & 0x00FFFFL);
+	tpl_printf(vars, TPLADD, "CASVERSIONFIXED",  (rdr->cas_version & 0x010000L) ? "checked" : "");
+#endif
+
+	//tpl_printf(vars, TPLADD, "DEMUXINDEX",  "%d", rdr->for_demux);
+
+#ifdef READER_TONGFANG
+	if(rdr->tongfang3_calibsn)
+		{ tpl_printf(vars, TPLADD, "TONGFANGCALIBSN", "%08X", rdr->tongfang3_calibsn); }
+
+#endif
+
+#ifdef READER_JET
+	for(i = 0; (size_t)i < sizeof(rdr->jet_authorize_id) && rdr->jet_authorize_id[i] == 0; i++);
+	if((size_t)i <  sizeof(rdr->jet_authorize_id))
+	{
+		for(i = 0; (size_t)i <  sizeof(rdr->jet_authorize_id) ; i++)
+			{ tpl_printf(vars, TPLAPPEND, "JETAUTHORIZEID", "%02X", rdr->jet_authorize_id[i]); }
+	}
+	tpl_addVar(vars, TPLADD, "JETFIXECM", (rdr->jet_fix_ecm == 1) ? "checked" : "");
+#endif
+
 #ifdef MODULE_CCCAM
 	tpl_printf(vars, TPLADD, "CCCMAXHOPS",   "%d", rdr->cc_maxhops);
 	tpl_printf(vars, TPLADD, "CCCMINDOWN",   "%d", rdr->cc_mindown);
@@ -8184,7 +8207,7 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 		memcpy(*result + bufsize, buf2, n);
 		bufsize += n;
 
-#ifdef WITH_EMU
+#if defined(WITH_EMU) || defined(READER_JET) || defined(READER_STREAMGUARD) || defined(READER_TONGFANG)
 		if(bufsize > 204800) // max request size 200kb
 #else
 		if(bufsize > 102400) // max request size 100kb

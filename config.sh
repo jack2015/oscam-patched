@@ -1,8 +1,8 @@
 #!/bin/sh
 
-addons="WEBIF WEBIF_LIVELOG WEBIF_JQUERY TOUCH WITH_SSL HAVE_DVBAPI WITH_NEUTRINO READ_SDT_CHARSETS IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_LB CS_CACHEEX CW_CYCLE_CHECK LCDSUPPORT LEDSUPPORT CLOCKFIX IPV6SUPPORT WITH_EMU WITH_SOFTCAM"
+addons="WEBIF WEBIF_LIVELOG WEBIF_JQUERY TOUCH WITH_SSL HAVE_DVBAPI WITH_NEUTRINO READ_SDT_CHARSETS IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_LB CS_CACHEEX CW_CYCLE_CHECK LCDSUPPORT LEDSUPPORT CLOCKFIX IPV6SUPPORT WITH_EMU WITH_SOFTCAM WITH_ANDROID"
 protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_CCCSHARE MODULE_GBOX MODULE_RADEGAST MODULE_SCAM MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA MODULE_GHTTP"
-readers="READER_NAGRA READER_NAGRA_MERLIN READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT READER_GRIFFIN READER_DGCRYPT"
+readers="READER_NAGRA READER_NAGRA_MERLIN READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_STREAMGUARD READER_JET READER_BULCRYPT READER_GRIFFIN READER_DGCRYPT"
 card_readers="CARDREADER_PHOENIX CARDREADER_INTERNAL CARDREADER_SC8IN1 CARDREADER_MP35 CARDREADER_SMARGO CARDREADER_DB2COM CARDREADER_STAPI CARDREADER_STAPI5 CARDREADER_STINGER CARDREADER_DRECAS"
 
 defconfig="
@@ -26,6 +26,7 @@ CONFIG_WITH_LB=y
 # CONFIG_CLOCKFIX=n
 # CONFIG_IPV6SUPPORT=n
 CONFIG_WITH_EMU=y
+CONFIG_WITH_ANDROID=y
 CONFIG_WITH_SOFTCAM=y
 # CONFIG_MODULE_CAMD33=n
 CONFIG_MODULE_CAMD35=y
@@ -52,6 +53,8 @@ CONFIG_READER_VIACCESS=y
 CONFIG_READER_VIDEOGUARD=y
 CONFIG_READER_DRE=y
 CONFIG_READER_TONGFANG=y
+CONFIG_READER_STREAMGUARD=y
+CONFIG_READER_JET=y
 CONFIG_READER_BULCRYPT=y
 CONFIG_READER_GRIFFIN=y
 CONFIG_READER_DGCRYPT=y
@@ -352,7 +355,8 @@ list_config() {
 	not_have_flag USE_LIBCRYPTO && echo "CONFIG_LIB_AES=y" || echo "# CONFIG_LIB_AES=n"
 	enabled MODULE_CCCAM && echo "CONFIG_LIB_RC6=y" || echo "# CONFIG_LIB_RC6=n"
 	not_have_flag USE_LIBCRYPTO && enabled MODULE_CCCAM && echo "CONFIG_LIB_SHA1=y" || echo "# CONFIG_LIB_SHA1=n"
-	enabled_any READER_DRE MODULE_SCAM READER_VIACCESS READER_NAGRA_MERLIN WITH_EMU && echo "CONFIG_LIB_DES=y" || echo "# CONFIG_LIB_DES=n"
+	enabled_any READER_DRE MODULE_SCAM READER_VIACCESS READER_NAGRA_MERLIN READER_TONGFANG READER_STREAMGUARD READER_JET WITH_EMU && echo "CONFIG_LIB_DES=y" || echo "# CONFIG_LIB_DES=n"
+	enabled READER_JET && echo "CONFIG_LIB_TWOFISH=y" || echo "CONFIG_LIB_TWOFISH=n"
 	enabled_any MODULE_CCCAM READER_NAGRA READER_NAGRA_MERLIN READER_SECA WITH_EMU && echo "CONFIG_LIB_IDEA=y" || echo "# CONFIG_LIB_IDEA=n"
 	not_have_flag USE_LIBCRYPTO && enabled_any READER_CONAX READER_CRYPTOWORKS READER_NAGRA READER_NAGRA_MERLIN WITH_EMU && echo "CONFIG_LIB_BIGNUM=y" || echo "# CONFIG_LIB_BIGNUM=n"
 	enabled READER_NAGRA_MERLIN && echo "CONFIG_LIB_MDC2=y" || echo "# CONFIG_LIB_MDC2=n"
@@ -451,26 +455,27 @@ print_components() {
 
 menu_addons() {
 	${DIALOG} --checklist "\nChoose add-ons:\n " $height $width $listheight \
-		WEBIF				"Web Interface"							$(check_test "WEBIF") \
-		WEBIF_LIVELOG		"LiveLog"								$(check_test "WEBIF_LIVELOG") \
+		WEBIF			"Web Interface"				$(check_test "WEBIF") \
+		WEBIF_LIVELOG		"LiveLog"				$(check_test "WEBIF_LIVELOG") \
 		WEBIF_JQUERY		"Jquery onboard (if disabled webload)"	$(check_test "WEBIF_JQUERY") \
-		TOUCH				"Touch Web Interface"					$(check_test "TOUCH") \
-		WITH_SSL			"OpenSSL support"						$(check_test "WITH_SSL") \
-		HAVE_DVBAPI			"DVB API"								$(check_test "HAVE_DVBAPI") \
-		WITH_NEUTRINO		"Neutrino support"						$(check_test "WITH_NEUTRINO") \
-		READ_SDT_CHARSETS	"DVB API read-sdt charsets"				$(check_test "READ_SDT_CHARSETS") \
-		IRDETO_GUESSING		"Irdeto guessing"						$(check_test "IRDETO_GUESSING") \
-		CS_ANTICASC			"Anti cascading"						$(check_test "CS_ANTICASC") \
-		WITH_DEBUG			"Debug messages"						$(check_test "WITH_DEBUG") \
-		MODULE_MONITOR		"Monitor"								$(check_test "MODULE_MONITOR") \
-		WITH_LB				"Loadbalancing"							$(check_test "WITH_LB") \
-		CS_CACHEEX			"Cache exchange"						$(check_test "CS_CACHEEX") \
-		CW_CYCLE_CHECK		"CW Cycle Check"						$(check_test "CW_CYCLE_CHECK") \
-		LCDSUPPORT			"LCD support"							$(check_test "LCDSUPPORT") \
-		LEDSUPPORT			"LED support"							$(check_test "LEDSUPPORT") \
-		CLOCKFIX			"Clockfix (disable on old systems!)"	$(check_test "CLOCKFIX") \
-		IPV6SUPPORT			"IPv6 support (experimental)"			$(check_test "IPV6SUPPORT") \
-		WITH_EMU			"Emulator support"						$(check_test "WITH_EMU") \
+		TOUCH			"Touch Web Interface"			$(check_test "TOUCH") \
+		WITH_SSL		"OpenSSL support"			$(check_test "WITH_SSL") \
+		HAVE_DVBAPI		"DVB API"				$(check_test "HAVE_DVBAPI") \
+		WITH_NEUTRINO		"Neutrino support"			$(check_test "WITH_NEUTRINO") \
+		READ_SDT_CHARSETS	"DVB API read-sdt charsets"		$(check_test "READ_SDT_CHARSETS") \
+		IRDETO_GUESSING		"Irdeto guessing"			$(check_test "IRDETO_GUESSING") \
+		CS_ANTICASC		"Anti cascading"			$(check_test "CS_ANTICASC") \
+		WITH_DEBUG		"Debug messages"			$(check_test "WITH_DEBUG") \
+		MODULE_MONITOR		"Monitor"				$(check_test "MODULE_MONITOR") \
+		WITH_LB			"Loadbalancing"				$(check_test "WITH_LB") \
+		CS_CACHEEX		"Cache exchange"			$(check_test "CS_CACHEEX") \
+		CW_CYCLE_CHECK		"CW Cycle Check"			$(check_test "CW_CYCLE_CHECK") \
+		LCDSUPPORT		"LCD support"				$(check_test "LCDSUPPORT") \
+		LEDSUPPORT		"LED support"				$(check_test "LEDSUPPORT") \
+		CLOCKFIX		"Clockfix (disable on old systems!)"	$(check_test "CLOCKFIX") \
+		IPV6SUPPORT		"IPv6 support (experimental)"		$(check_test "IPV6SUPPORT") \
+		WITH_ANDROID		"ANDROID API SORPORT"			$(check_test "WITH_ANDROID") \
+		WITH_EMU		"Emulator support"			$(check_test "WITH_EMU") \
 		WITH_SOFTCAM		"Built-in SoftCam.Key"					$(check_test "WITH_SOFTCAM") \
 		2> ${tempfile}
 
@@ -484,18 +489,18 @@ menu_addons() {
 menu_protocols() {
 	${DIALOG} --checklist "\nChoose protocols:\n " $height $width $listheight \
 		MODULE_CAMD33		"camd 3.3"			$(check_test "MODULE_CAMD33") \
-		MODULE_CAMD35		"camd 3.5 UDP"		$(check_test "MODULE_CAMD35") \
-		MODULE_CAMD35_TCP	"camd 3.5 TCP"		$(check_test "MODULE_CAMD35_TCP") \
+		MODULE_CAMD35		"camd 3.5 UDP"			$(check_test "MODULE_CAMD35") \
+		MODULE_CAMD35_TCP	"camd 3.5 TCP"			$(check_test "MODULE_CAMD35_TCP") \
 		MODULE_NEWCAMD		"newcamd"			$(check_test "MODULE_NEWCAMD") \
 		MODULE_CCCAM		"CCcam"				$(check_test "MODULE_CCCAM") \
-		MODULE_CCCSHARE		"CCcam share"		$(check_test "MODULE_CCCSHARE") \
-		MODULE_GBOX			"gbox"				$(check_test "MODULE_GBOX") \
+		MODULE_CCCSHARE		"CCcam share"			$(check_test "MODULE_CCCSHARE") \
+		MODULE_GBOX		"gbox"				$(check_test "MODULE_GBOX") \
 		MODULE_RADEGAST		"radegast"			$(check_test "MODULE_RADEGAST") \
 		MODULE_SERIAL		"Serial"			$(check_test "MODULE_SERIAL") \
-		MODULE_CONSTCW		"constant CW"		$(check_test "MODULE_CONSTCW") \
+		MODULE_CONSTCW		"constant CW"			$(check_test "MODULE_CONSTCW") \
 		MODULE_PANDORA		"Pandora"			$(check_test "MODULE_PANDORA") \
 		MODULE_GHTTP		"Ghttp"				$(check_test "MODULE_GHTTP") \
-		MODULE_SCAM			"scam"				$(check_test "MODULE_SCAM") \
+		MODULE_SCAM		"scam"				$(check_test "MODULE_SCAM") \
 		2> ${tempfile}
 
 	opt=${?}
@@ -507,16 +512,18 @@ menu_protocols() {
 
 menu_readers() {
 	${DIALOG} --checklist "\nChoose readers (CA systems):\n " $height $width $listheight \
-		READER_NAGRA		"Nagravision"		$(check_test "READER_NAGRA") \
-		READER_NAGRA_MERLIN	"Nagra Merlin"		$(check_test "READER_NAGRA_MERLIN") \
+		READER_NAGRA		"Nagravision"			$(check_test "READER_NAGRA") \
+		READER_NAGRA_MERLIN	"Nagra Merlin"			$(check_test "READER_NAGRA_MERLIN") \
 		READER_IRDETO		"Irdeto"			$(check_test "READER_IRDETO") \
 		READER_CONAX		"Conax"				$(check_test "READER_CONAX") \
-		READER_CRYPTOWORKS	"Cryptoworks"		$(check_test "READER_CRYPTOWORKS") \
-		READER_SECA			"Seca"				$(check_test "READER_SECA") \
+		READER_CRYPTOWORKS	"Cryptoworks"			$(check_test "READER_CRYPTOWORKS") \
+		READER_SECA		"Seca"				$(check_test "READER_SECA") \
 		READER_VIACCESS		"Viaccess"			$(check_test "READER_VIACCESS") \
-		READER_VIDEOGUARD	"NDS Videoguard"	$(check_test "READER_VIDEOGUARD") \
-		READER_DRE			"DRE Crypt"			$(check_test "READER_DRE") \
+		READER_VIDEOGUARD	"NDS Videoguard"		$(check_test "READER_VIDEOGUARD") \
+		READER_DRE		"DRE Crypt"			$(check_test "READER_DRE") \
 		READER_TONGFANG		"Tongfang"			$(check_test "READER_TONGFANG") \
+		READER_STREAMGUARD	"Streamguard"			$(check_test "READER_STREAMGUARD") \
+		READER_JET		"Jet"				$(check_test "READER_JET") \
 		READER_BULCRYPT		"Bulcrypt"			$(check_test "READER_BULCRYPT") \
 		READER_GRIFFIN		"Griffin"			$(check_test "READER_GRIFFIN") \
 		READER_DGCRYPT		"DGCrypt"			$(check_test "READER_DGCRYPT") \
@@ -531,16 +538,16 @@ menu_readers() {
 
 menu_card_readers() {
 	${DIALOG} --checklist "\nChoose card reader drivers:\n " $height $width $listheight \
-		CARDREADER_PHOENIX	"Phoenix/mouse"					$(check_test "CARDREADER_PHOENIX") \
-		CARDREADER_INTERNAL	"Internal (Sci,Azbox,Cool)"		$(check_test "CARDREADER_INTERNAL") \
-		CARDREADER_SC8IN1	"SC8in1"						$(check_test "CARDREADER_SC8IN1") \
+		CARDREADER_PHOENIX	"Phoenix/mouse"			$(check_test "CARDREADER_PHOENIX") \
+		CARDREADER_INTERNAL	"Internal (Sci,Azbox,Cool)"	$(check_test "CARDREADER_INTERNAL") \
+		CARDREADER_SC8IN1	"SC8in1"			$(check_test "CARDREADER_SC8IN1") \
 		CARDREADER_MP35		"AD-Teknik MP 3.6/USB Phoenix"	$(check_test "CARDREADER_MP35") \
 		CARDREADER_SMARGO	"Argolis Smargo Smartreader"	$(check_test "CARDREADER_SMARGO") \
-		CARDREADER_DB2COM	"dbox2"							$(check_test "CARDREADER_DB2COM") \
-		CARDREADER_STAPI	"STAPI"							$(check_test "CARDREADER_STAPI") \
-		CARDREADER_STAPI5	"STAPI5"						$(check_test "CARDREADER_STAPI5") \
-		CARDREADER_STINGER	"STINGER"						$(check_test "CARDREADER_STINGER") \
-		CARDREADER_DRECAS	"DRECAS"						$(check_test "CARDREADER_DRECAS") \
+		CARDREADER_DB2COM	"dbox2"				$(check_test "CARDREADER_DB2COM") \
+		CARDREADER_STAPI	"STAPI"				$(check_test "CARDREADER_STAPI") \
+		CARDREADER_STAPI5	"STAPI5"			$(check_test "CARDREADER_STAPI5") \
+		CARDREADER_STINGER	"STINGER"			$(check_test "CARDREADER_STINGER") \
+		CARDREADER_DRECAS	"DRECAS"			$(check_test "CARDREADER_DRECAS") \
 	2> ${tempfile}
 
 	opt=${?}
@@ -705,18 +712,14 @@ do
 		break
 	;;
 	'-r'|'--oscam-revision')
-		revision=`(svnversion -n . 2>/dev/null || printf 0) | sed 's/.*://; s/[^0-9]*$//; s/^$/0/'`
-		if [ "$revision" = "0" ]
-		then
-			which git > /dev/null 2>&1 && revision=`git log -25 --pretty=%B | grep git-svn-id | head -n 1 | sed -n -e 's/^.*trunk@\([0-9]*\) .*$/\1/p'`
-		fi
-		emuversion=`grep EMU_VERSION module-emulator-osemu.h | awk '{ print $3 }'`
-		if [ -z "$emuversion" ]
-		then
-			echo "$revision"
-		else
-			echo "$revision-$emuversion"
-		fi
+			if [ "$svnrevision" = "" ]; then
+				[ -f .svnrevision ] && svnrevision=$(cat .svnrevision)
+			else
+				echo $svnrevision > .svnrevision
+			fi
+			[ "$svnrevision" = "0" ] || revision=$svnrevision
+		    echo $revision
+
 		break
 	;;
 	'--emu-version')

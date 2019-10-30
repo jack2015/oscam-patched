@@ -1237,6 +1237,7 @@ int32_t get_UA_ofs(uint16_t caid)
 		case 0x0D: // CRYPTOWORKS
 			//ofs = 1;
 			//break;
+		case 0x4A: // STREAMGUARD:
 		case 0x4B: // TONGFANG
 		case 0x09: // VIDEOGUARD
 		case 0x0B: // CONAX
@@ -1312,7 +1313,7 @@ void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid)
 	//		//Place here your own adjustments!
 	//}
 
-	if(caid_is_bulcrypt(caid))
+	if (caid_is_bulcrypt(caid) || caid_is_streamguard(caid) || caid_is_tongfang(caid) || caid_is_dvn(caid))
 	{
 		out[4] = in[0];
 		out[5] = in[1];
@@ -1348,7 +1349,7 @@ void cc_UA_cccam2oscam(uint8_t *in, uint8_t *out, uint16_t caid)
 	//		//Place here your own adjustments!
 	//}
 
-	if(caid_is_bulcrypt(caid))
+	if (caid_is_bulcrypt(caid) || caid_is_streamguard(caid) || caid_is_tongfang(caid) || caid_is_dvn(caid))
 	{
 		out[0] = in[4];
 		out[1] = in[5];

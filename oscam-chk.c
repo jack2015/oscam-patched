@@ -1129,7 +1129,8 @@ int8_t chk_halfCW(ECM_REQUEST *er, uint8_t *cw)
 
 		// check for correct cw position
 		if((get_odd_even(er) == 0x80 && part1 && !part2) // xxxxxxxx00000000
-			||(get_odd_even(er) == 0x81 && !part1 && part2)) // 00000000xxxxxxxx
+			||(get_odd_even(er) == 0x81 && !part1 && part2) // 00000000xxxxxxxx
+			||(get_odd_even(er) == 0x50 && part1 && part2))   //xxxxxxxxxxxxxxxx
 		{
 			return 1;
 		}
