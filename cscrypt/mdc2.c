@@ -34,7 +34,7 @@
 #if !defined(WITH_LIBCRYPTO) || WITH_LIBCRYPTO == 0
 
 //OPENSSL_GLOBAL const DES_LONG DES_SPtrans[8][64] =
-const DES_LONG DES_SPtransOSEMU[8][64] =
+const DES_LONG DES_SPtrans[8][64] =
 {
 	{
 		/* nibble 0 */
@@ -201,14 +201,14 @@ const DES_LONG DES_SPtransOSEMU[8][64] =
         LOAD_DATA_tmp(R,S,u,t,E0,E1); \
         t=ROTATE(t,4); \
         LL^= \
-            DES_SPtransOSEMU[0][(u>> 2L)&0x3f]^ \
-            DES_SPtransOSEMU[2][(u>>10L)&0x3f]^ \
-            DES_SPtransOSEMU[4][(u>>18L)&0x3f]^ \
-            DES_SPtransOSEMU[6][(u>>26L)&0x3f]^ \
-            DES_SPtransOSEMU[1][(t>> 2L)&0x3f]^ \
-            DES_SPtransOSEMU[3][(t>>10L)&0x3f]^ \
-            DES_SPtransOSEMU[5][(t>>18L)&0x3f]^ \
-            DES_SPtransOSEMU[7][(t>>26L)&0x3f]; }
+            DES_SPtrans[0][(u>> 2L)&0x3f]^ \
+            DES_SPtrans[2][(u>>10L)&0x3f]^ \
+            DES_SPtrans[4][(u>>18L)&0x3f]^ \
+            DES_SPtrans[6][(u>>26L)&0x3f]^ \
+            DES_SPtrans[1][(t>> 2L)&0x3f]^ \
+            DES_SPtrans[3][(t>>10L)&0x3f]^ \
+            DES_SPtrans[5][(t>>18L)&0x3f]^ \
+            DES_SPtrans[7][(t>>26L)&0x3f]; }
 
 #define IP(l,r) \
         { \
@@ -499,7 +499,7 @@ void DES_set_odd_parity(DES_cblock *key)
 }
 
 
-void DES_encrypt1OSEMU(DES_LONG *data, DES_key_schedule *ks, int enc)
+void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
 	register DES_LONG l, r, t, u;
 	register DES_LONG *s;
@@ -643,11 +643,11 @@ static void mdc2_body(MDC2_CTX *c, const unsigned char *in, size_t len)
 
 		DES_set_odd_parity(&c->h);
 		DES_set_key_unchecked(&c->h, &k);
-		DES_encrypt1OSEMU(d, &k, 1);
+		DES_encrypt1(d, &k, 1);
 
 		DES_set_odd_parity(&c->hh);
 		DES_set_key_unchecked(&c->hh, &k);
-		DES_encrypt1OSEMU(dd, &k, 1);
+		DES_encrypt1(dd, &k, 1);
 
 		ttin0 = tin0 ^ dd[0];
 		ttin1 = tin1 ^ dd[1];
