@@ -72,7 +72,7 @@ static int32_t tongfang_card_init(struct s_reader *reader, ATR *newatr)
 	get_atr;
 	def_resp;
 
-       if (!(reader->cas_version & 0x010000)) {
+    if (!(reader->cas_version & 0x010000)) {
 		if (atr_size == 8 && atr[0] == 0x3B && atr[1] == 0x64) {
 			reader->cas_version = 1;
 		} else if (atr_size > 9 && atr[0] == 0x3B && (atr[1] & 0xF0) == 0x60 && 0 == memcmp(atr + 4, "NTIC", 4)) {
@@ -86,6 +86,7 @@ static int32_t tongfang_card_init(struct s_reader *reader, ATR *newatr)
 	}
 
 	uint32_t cas_version = reader->cas_version & 0x00FFFFL;
+
 	reader->caid = 0x4A02;
 	reader->nprov = 1;
 	memset(reader->prid, 0x00, sizeof(reader->prid));
