@@ -583,6 +583,7 @@ static int32_t streamguard_card_info(struct s_reader *reader)
 		int j=0;
 		get_subscription_cmd[10] = reader->prid[i][2];
 		get_subscription_cmd[11] = reader->prid[i][3];
+		int n;
 		for(n = 0; n < 10; n++){
 			get_subscription_cmd[5] = bankid;
 			write_cmd(get_subscription_cmd, get_subscription_cmd + 5);
