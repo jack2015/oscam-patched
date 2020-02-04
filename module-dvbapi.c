@@ -1970,13 +1970,14 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 	int32_t n, added = 0;
 	int32_t stream = demux[demux_id].STREAMpidcount - 1;
 
+	if(ecmpid == 0x1FFF)
+	{
+		//we skip ecmpid=0X1FFF,that will cause the machine to crash
+		return;
+	}
+
 	for(n = 0; n < demux[demux_id].ECMpidcount; n++)
 	{
-		if(ecmpid == 0x1FFF)
-		{
-			//we skip ecmpid=1FFF
-			added = 1;
-		}
 		if(demux[demux_id].ECMpids[n].CAID == caid && demux[demux_id].ECMpids[n].ECM_PID == ecmpid
 			&& (!provid || (provid && demux[demux_id].ECMpids[n].PROVID == provid)))
 		{
