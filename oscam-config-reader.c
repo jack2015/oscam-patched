@@ -633,6 +633,33 @@ static void ins7E_fn(const char *token, char *value, void *setting, long var_siz
 		{ fprintf_conf(f, token, "\n"); }
 }
 
+static void des_and_3des_key_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	uint8_t *var = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(((len != 16) && (len != 32)) || (key_atob_l(value, var, len)))
+		{
+			if(len > 0)
+				{ fprintf(stderr, "reader %s parse error, %s=%s\n", token, token, value); }
+			memset(var, 0, 17);
+		}
+		else
+		{
+			var[16] = len/2;
+		}
+		return;
+	}
+	if(var[16])
+	{
+		char tmp[var[16] * 2 + 1];
+		fprintf_conf(f, token, "%s\n", cs_hexdump(0, var, var[16], tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, token, "\n"); }
+}
+
 static void atr_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	struct s_reader *rdr = setting;
@@ -1082,6 +1109,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_UINT8("gbox_max_ecm_send"             , OFS(gbox_maxecmsend),                 DEFAULT_GBOX_MAX_ECM_SEND),
 	DEF_OPT_UINT8("gbox_reshare"                  , OFS(gbox_reshare),                    DEFAULT_GBOX_RESHARE),
 	DEF_OPT_UINT8("cccam_reshare"                 , OFS(gbox_cccam_reshare),              DEFAULT_CCC_GBOX_RESHARE),
+	DEF_OPT_UINT8("force_remm"                    , OFS(gbox_force_remm),                 0),
 #endif
 	DEF_OPT_STR("readnano"                        , OFS(emmfile),                         NULL),
 	DEF_OPT_FUNC("services"                       , OFS(sidtabs),                         reader_services_fn),
@@ -1127,6 +1155,8 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC_X("ins7e"                        , OFS(ins7E),                           ins7E_fn, SIZEOF(ins7E)),
 	DEF_OPT_FUNC_X("ins7e11"                      , OFS(ins7E11),                         ins7E_fn, SIZEOF(ins7E11)),
 	DEF_OPT_FUNC_X("ins2e06"                      , OFS(ins2e06),                         ins7E_fn, SIZEOF(ins2e06)),
+	DEF_OPT_FUNC("k1_generic"                     , OFS(k1_generic),                      des_and_3des_key_fn),
+	DEF_OPT_FUNC("k1_unique"                      , OFS(k1_unique),                       des_and_3des_key_fn),
 	DEF_OPT_INT8("fix07"                          , OFS(fix_07),                          1),
 	DEF_OPT_INT8("fix9993"                        , OFS(fix_9993),                        0),
 	DEF_OPT_INT8("readtiers"                      , OFS(readtiers),                       1),
@@ -1230,7 +1260,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	static const char *hw_only_settings[] =
 	{
 		"readnano", "resetcycle", "smargopatch", "autospeed", "sc8in1_dtrrts_patch", "boxid","fix07",
-		"fix9993", "rsakey", "deskey", "ins7e", "ins7e11", "ins2e06", "force_irdeto", "needsemmfirst", "boxkey",
+		"fix9993", "rsakey", "deskey", "ins7e", "ins7e11", "ins2e06", "k1_generic", "k1_unique", "force_irdeto", "needsemmfirst", "boxkey",
 		"atr", "detect", "nagra_read", "mhz", "cardmhz", "readtiers", "read_old_classes", "use_gpio", "needsglobalfirst",
 #ifdef READER_NAGRA_MERLIN
 		"mod1", "data50", "mod50", "key60", "exp60", "nuid", "cwekey",
@@ -1308,7 +1338,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	// These are written only when the reader is GBOX
 	static const char *gbox_settings[] =
 	{
-		"gbox_max_distance", "gbox_max_ecm_send", "gbox_reshare", "cccam_reshare",
+		"gbox_max_distance", "gbox_max_ecm_send", "gbox_reshare", "cccam_reshare", "force_remm",
 		0
 	};
 	if(reader->typ != R_GBOX)
