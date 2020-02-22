@@ -267,7 +267,7 @@ static int32_t jet_card_init(struct s_reader *reader, ATR *newatr)
 	int i,len;
 	struct twofish_ctx ctx;
 
-	if((hist_size < 14) || (memcmp(hist,"FLASH ATR DVB TESTING", 21) && memcmp(hist, "DVN TECH", 8) != 0)) { return ERROR; }
+	if((hist_size < 14) || (memcmp(hist,"FLASH ATR DVB T", 15) && memcmp(hist, "DVN TECH", 8) != 0)) { return ERROR; }
 	if(!(reader->cas_version & 0x010000)) {
 		reader->cas_version = (hist[12] - 0x30) * 10 + hist[13] - 0x30;
 	}
