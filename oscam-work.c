@@ -77,7 +77,6 @@ void free_joblist(struct s_client *cl)
 /*
  Work threads are named like this:
    w[r|c]XX-[rdr->label|client->username]
-
    w      - work thread prefix
    [r|c]  - depending whether the the action is related to reader or client
    XX     - two digit action code from enum actions
