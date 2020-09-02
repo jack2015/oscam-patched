@@ -1806,6 +1806,7 @@ static void clear_rdr_stats(struct s_reader *rdr)
 	rdr->ecmsnok = 0;
 	rdr->ecmstout = 0;
 	rdr->ecmshealthok = 0;
+	rdr->ecmshealthoklg = 0;
 	rdr->ecmshealthnok = 0;
 	rdr->ecmshealthtout = 0;
 	rdr->ecmsfilteredhead = 0;
@@ -1965,7 +1966,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 #ifdef CS_CACHEEX
 			char *new_proto;
 #if defined(MODULE_CAMD35) || defined (MODULE_CAMD35_TCP)
-			if(rdr->cacheex.feature_bitfield || (cl && cl->c35_extmode))
+			if(rdr->cacheex.feature_bitfield || (cl && cl->c35_extmode > 1))
 #else
 			if(rdr->cacheex.feature_bitfield)
 #endif
@@ -2085,6 +2086,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 			tpl_printf(vars, TPLADD, "ECMSOK", PRINTF_LOCAL_D, rdr->ecmsok);
 			tpl_printf(vars, TPLADD, "ECMSOKREL", " (%.2f %%)", rdr->ecmshealthok);
+			tpl_printf(vars, TPLADD, "ECMSOKLG", PRINTF_LOCAL_D, rdr->ecmsoklg);
+			tpl_printf(vars, TPLADD, "ECMSOKLGREL", " (%.2f %%)", rdr->ecmshealthoklg);
 			tpl_printf(vars, TPLADD, "ECMSNOK", PRINTF_LOCAL_D, rdr->ecmsnok);
 			tpl_printf(vars, TPLADD, "ECMSNOKREL", " (%.2f %%)",rdr->ecmshealthnok);
 			tpl_printf(vars, TPLADD, "ECMSTOUT", PRINTF_LOCAL_D, rdr->ecmstout);
@@ -4102,6 +4105,8 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
 
 		char aiover[32];
+		aiover[0] = '\0';
+
 		if(cl->account && cl->cacheex_aio_checked)
 		{
 			if(cl->account->cacheex.feature_bitfield & 32)
@@ -4149,7 +4154,11 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 				if (!apicall)
 				{
 					tpl_addVar(vars, TPLADD, "CAMD3A", (char *)proto);
-					tpl_printf(vars, TPLADD, "AIOVER", "[cx-aio %s]", aiover);
+					if(aiover[0] == '\0')
+						tpl_addVar(vars, TPLADD, "AIOVER", "");
+					else
+						tpl_printf(vars, TPLADD, "AIOVER", "[cx-aio %s]", aiover);
+					
 					tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCAMD3AIOPIC"));
 				}
 				else
@@ -4640,7 +4649,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 #ifdef CS_CACHEEX
 #if defined(MODULE_CAMD35) || defined (MODULE_CAMD35_TCP)
-		if(latestclient != NULL && (latestclient->account->cacheex.feature_bitfield || latestclient->c35_extmode))
+		if(latestclient != NULL && (latestclient->account->cacheex.feature_bitfield || latestclient->c35_extmode > 1))
 #else
 		if(latestclient != NULL && (latestclient->account->cacheex.feature_bitfield))
 #endif
@@ -5784,7 +5793,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					if(cl && 
 						(  (cl->typ == 'c' && cl->account && cl->account->cacheex.feature_bitfield)
 #if defined(MODULE_CAMD35) || defined (MODULE_CAMD35_TCP)
-						|| (cl->c35_extmode)
+						|| (cl->c35_extmode > 1)
 #endif
 #ifdef MODULE_CCCAM
 						|| (cc && cc->extended_lg_flagged_cws)
@@ -6358,6 +6367,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%d", first_client ? first_client->cwcacheexhit : 0);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", cache_size());
+	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE_LG", "%d", cache_size_lg());
 	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
 	tpl_addVar(vars, TPLADD, "CACHEEXSTATS", tpl_getTpl(vars, "STATUSCACHEX"));
 #endif
@@ -8013,6 +8023,7 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", PRINTF_LOCAL_D, first_client ? first_client->cwcacheexhit : 0);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", cache_size());
+	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE_LG", "%d", cache_size_lg());
 
 	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
 
