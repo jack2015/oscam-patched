@@ -1974,11 +1974,13 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			{
 				const char *aio_suffix = " (cx-aio)";
 
-				if(cs_malloc(&new_proto, strlen(proto)+strlen(aio_suffix)+1))
-				{
-					new_proto[0] = '\0';
-					strcat(new_proto, proto);
-					strcat(new_proto, aio_suffix);
+				if(cs_malloc(&new_proto, strlen(proto)+strlen(aio_suffix)+1)) {
+					if (!cs_strncat(new_proto, (char *)proto, strlen(proto)+strlen(aio_suffix)+1)) {
+						cs_log("FIXME!");
+					}
+					if (!cs_strncat(new_proto, (char *)aio_suffix, strlen(proto)+strlen(aio_suffix)+1)) {
+						cs_log("FIXME!");
+					}
 				}
 			}
 #endif
@@ -4657,17 +4659,18 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		{
 			const char *aio_suffix = " (cx-aio)";
 			char *new_proto;
-			if(cs_malloc(&new_proto, strlen(proto)+strlen(aio_suffix)+1))
-			{
-				new_proto[0] = '\0';
-				strcat(new_proto,proto);
-				strcat(new_proto,aio_suffix);
-				webif_add_client_proto(vars, latestclient, (const char*)new_proto, apicall);
+			if(cs_malloc(&new_proto, strlen(proto)+strlen(aio_suffix)+1)) {
+				if (!cs_strncat(new_proto, (char *)proto, strlen(proto)+strlen(aio_suffix)+1)) {
+					cs_log("FIXME!");
+				}
+				if (cs_strncat(new_proto, (char *)aio_suffix, strlen(proto)+strlen(aio_suffix)+1)) {
+					webif_add_client_proto(vars, latestclient, (const char *)new_proto, apicall);
+				} else {
+					cs_log("FIXME!");
+				}
 				free(new_proto);
 			}
-		}
-		else
-		{
+		} else {
 #endif
 		webif_add_client_proto(vars, latestclient, proto, apicall);
 #ifdef CS_CACHEEX
@@ -5804,17 +5807,19 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					{
 						const char *aio_suffix = " (cx-aio)";
 						char *new_proto;
-						if(cs_malloc(&new_proto, strlen(proto)+strlen(aio_suffix)+1))
-						{
+						if(cs_malloc(&new_proto, strlen(proto)+strlen(aio_suffix)+1)) {
 							new_proto[0] = '\0';
-							strcat(new_proto,proto);
-							strcat(new_proto,aio_suffix);
-							webif_add_client_proto(vars, cl, (const char*)new_proto, apicall);
+							if (!cs_strncat(new_proto, (char *)proto, strlen(proto)+strlen(aio_suffix)+1)) {
+								cs_log("FIXME!");
+							}
+							if (cs_strncat(new_proto, (char *)aio_suffix, strlen(proto)+strlen(aio_suffix)+1)) {
+								webif_add_client_proto(vars, cl, (const char*)new_proto, apicall);
+							} else {
+								cs_log("FIXME!");
+							}
 							free(new_proto);
 						}
-					}
-					else
-					{
+					} else {
 #endif
 					webif_add_client_proto(vars, cl, proto, apicall);
 #ifdef CS_CACHEEX
@@ -6900,11 +6905,11 @@ static char *send_oscam_script(struct templatevars * vars, struct uriparams * pa
 
 					if((scriptparam != NULL) && (sizeof(scriptparam) > 0))
 					{
-						strcat(system_str, " ");
-						strcat(system_str, scriptparam);
+						cs_strncat(system_str, " ", sizeof(system_str));
+						cs_strncat(system_str, scriptparam, sizeof(system_str));
 					}
 
-					fp = popen(system_str,"r");
+					fp = popen(system_str, "r");
 
 					while (fgets(buf, sizeof(buf), fp) != NULL)
 					{
@@ -8885,8 +8890,12 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 		if(cfg.http_user && cfg.http_pwd)
 		{
-			if(!authok || strlen(opaque) != MD5_DIGEST_LENGTH * 2) { calculate_opaque(addr, opaque); }
-			if(authok != 2)
+			if (!authok || strlen(opaque) != MD5_DIGEST_LENGTH * 2)
+			{
+				calculate_opaque(addr, opaque);
+			}
+
+			if (authok != 2)
 			{
 				if(!authok)
 				{
@@ -8900,26 +8909,42 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				}
 				calculate_nonce(NULL, expectednonce, opaque);
 			}
-			if(authok != 1)
+
+			if (authok != 1)
 			{
 				snprintf(authheadertmp, sizeof(authheadertmp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"%s\", nonce=\"%s\"", AUTHREALM, opaque, expectednonce);
-				if(authok == 2) { strncat(authheadertmp, ", stale=true", sizeof(authheadertmp) - strlen(authheadertmp) - 1); }
+				if (authok == 2)
+				{
+					if (!cs_strncat(authheadertmp, ", stale=true", sizeof(authheadertmp))) {
+						cs_log("WARNING, bug here!");
+					}
+				}
 			}
 			else
-				{ snprintf(authheadertmp, sizeof(authheadertmp), "Authentication-Info: nextnonce=\"%s\"", expectednonce); }
+			{
+				snprintf(authheadertmp, sizeof(authheadertmp), "Authentication-Info: nextnonce=\"%s\"", expectednonce);
+			}
+
 			extraheader = authheadertmp;
-			if(authok != 1)
+
+			if (authok != 1)
 			{
 				char *msg = "Access denied.\n";
 				send_headers(f, 401, "Unauthorized", extraheader, "text/html", 0, strlen(msg), msg, 0);
 				webif_write(msg, f);
 				NULLFREE(authheader);
 				NULLFREE(filebuf);
-				if(*keepalive) { continue; }
-				else { return 0; }
+				if (*keepalive) {
+					continue;
+				} else {
+					return 0;
+				}
 			}
 		}
-		else { NULLFREE(authheader); }
+		else
+		{
+			NULLFREE(authheader);
+		}
 
 		/*build page*/
 		if(pgidx == 8)

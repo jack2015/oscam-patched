@@ -2652,16 +2652,29 @@ void move_card_to_end(struct s_client *cl, struct cc_card *card_to_move)
 	}
 }*/
 
-void addParam(char *param, char *value)
+void addParam(char *param, size_t param_sz, char *value)
 {
-	if(strlen(param) < 4)
-	{
-		strcat(param, value);
+	if (!param_sz) {
+		cs_log("ERROR! Sizeof param is zero!");
+		return;
 	}
-	else
-	{
-		strcat(param, ",");
-		strcat(param, value);
+
+	if (param && value) {
+		if ((strlen(param) + strlen(value) + 1) < param_sz) {
+			if (strlen(param) < 4) {
+				cs_strncat(param, value, param_sz);
+			}
+			else {
+				cs_strncat(param, ",", param_sz);
+				cs_strncat(param, value, param_sz);
+			}
+		}
+		else {
+			cs_log("ERROR! Buffer overflow in addParam!");
+		}
+	}
+	else {
+	cs_log("ERROR! Booth param and value pointer NULL!");
 	}
 }
 
@@ -3086,25 +3099,27 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 
 							if(cc->extended_mode)
 							{
-								addParam(param, "EXT");
+								addParam(param, sizeof(param), "EXT");
 							}
 
 							if(cc->cccam220)
 							{
-								addParam(param, "SID");
+								addParam(param, sizeof(param), "SID");
 							}
 
 							if(cc->sleepsend)
 							{
-								addParam(param, "SLP");
+								addParam(param, sizeof(param), "SLP");
 							}
 
 							if(cc->extended_lg_flagged_cws)
 							{
-								addParam(param, "LGF");
+								addParam(param, sizeof(param), "LGF");
 							}
 
-							strcat(param, "]");
+							if (!cs_strncat(param, "]", sizeof(param))) {
+								cs_log("BUG!!, Adding ']' didn't succed!");
+							}
 						}
 
 						uint8_t token[256];
