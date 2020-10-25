@@ -358,6 +358,7 @@ const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipb
 #define BOX_INDEX_QBOXHD 0
 #define BOX_INDEX_DREAMBOX_DVBAPI3 1
 #define BOX_INDEX_COOLSTREAM 6
+#define BOX_INDEX_ANDROID 7
 
 static const struct box_devices devices[BOX_COUNT] =
 {
@@ -372,6 +373,7 @@ static const struct box_devices devices[BOX_COUNT] =
 	/* sh4      (stapi)*/       { "/dev/stapi/",           "stpti4_ioctl", "stpti4_ioctl", "/tmp/camd.socket", STAPI    },
 #endif
 	/* coolstream*/             { "/dev/cnxt/",            "null",         "null",         "/tmp/camd.socket", COOLAPI  },
+	/*   ANDROID*/              { "/dev/",                 "null",         "null",         "/data/local/tmp/camd.socket", DVBAPI_3 },
 };
 
 static int32_t selected_box = -1;
@@ -1143,7 +1145,16 @@ static int32_t dvbapi_get_descrambler_info(void)
 
 static int32_t dvbapi_detect_api(void)
 {
-#if defined WITH_COOLAPI || defined WITH_COOLAPI2
+#if defined(WITH_ANDROID)
+	selected_api		 = DVBAPI_3;
+	selected_box 		 = BOX_INDEX_ANDROID;
+	disable_pmt_files  = 1;
+	cfg.dvbapi_pmtmode = 1;
+	cfg.dvbapi_listenport = 0; // TCP port to listen instead of camd.socket
+	cs_log("Using %s listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d",
+				devices[selected_box].cam_socket_path, selected_api, cfg.dvbapi_boxtype);
+	return 1;
+#elif defined WITH_COOLAPI || defined WITH_COOLAPI2
 	selected_api = COOLAPI;
 	selected_box = BOX_INDEX_COOLSTREAM;
 	disable_pmt_files = 1;
