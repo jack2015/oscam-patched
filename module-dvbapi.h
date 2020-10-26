@@ -21,10 +21,6 @@
 #define TMPDIR          "./"
 #define STANDBY_FILE    "./.pauseoscam"
 #define ECMINFO_FILE    "./ecm.info"
-#elif defined(WITH_ANDROID)
-#define TMPDIR          "/data/local/tmp/"
-#define STANDBY_FILE    "/data/local/tmp/.pauseoscam"
-#define ECMINFO_FILE    "/data/local/tmp/ecm.info"
 #else
 #define TMPDIR          "/tmp/"
 #define STANDBY_FILE    "/tmp/.pauseoscam"
