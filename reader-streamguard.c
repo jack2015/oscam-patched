@@ -431,7 +431,7 @@ static int32_t streamguard_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 		des_ecb_decrypt(ea->cw, key1, sizeof(ea->cw));  //decrypt
 	}
 
-	rdr_log(reader, "do_ecm: tag=%x", tag);
+	//rdr_log(reader, "do_ecm: tag=%x", tag);
 	if (tag != 0x120 && tag != 0x100 && tag != 0x10A && tag != 0x101 && tag != 0x47 && tag != 0x92 && tag != 0xDE \
 	    && tag != 0x116 && tag != 0x1D6 && tag != 0xCD && tag != 0x3D && tag != 0x1D3 && tag != 0x16E && tag != 0x07) {
 		int32_t a=b2i(2, data);
