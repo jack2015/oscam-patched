@@ -8329,7 +8329,6 @@ int32_t dvbapi_set_section_filter(int32_t demux_id, ECM_REQUEST *er, int32_t n)
 	{
 		ecmfilter = 0x80; // current processed ecm is odd, next will be filtered for even
 	}
-
 	else if (er->ecm[0] == 80)
 	{
 		ecmfilter = 80; // set filter to wait for any ecms
