@@ -1920,6 +1920,8 @@ int32_t main(int32_t argc, char *argv[])
 	led_status_starting();
 
 	ac_init();
+	
+	gbox_send_init_hello();
 
 	start_thread("card poll", (void *) &card_poll, NULL, NULL, 1, 1);
 
@@ -1939,8 +1941,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	// Cleanup
 #ifdef MODULE_GBOX
-if(!cfg.gsms_dis)
-	{ stop_sms_sender(); }
+	stop_gbx_ticker();
 #endif
 #ifdef WITH_EMU
 	stop_stream_server();
