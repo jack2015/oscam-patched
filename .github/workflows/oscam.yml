@@ -9,24 +9,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        gcc: [10]
     steps:
     - uses: actions/checkout@v2
-    - name: install gcc ${{ matrix.gcc }}
+    - name: install gcc-10
       run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
         sudo apt-get -q update
-        sudo apt install g++-${{ matrix.gcc }}
+        sudo apt-get install gcc-10
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100
     - name: install dev packages
       run: |
         sudo apt-get -q update
         sudo apt-get install dialog xz-utils gawk subversion gcc make libusb-dev libusb-1.0-0 libusb-1.0-0-dev libssl-dev libpcsclite-dev libccid libc6-dev zlib1g-dev build-essential gcc-multilib module-assistant tofrodos sshpass openssl
     - name: build Oscam
-      env: 
-        CC: "gcc-${{ matrix.gcc }}"
-        CXX: "g++-${{ matrix.gcc }}"
       run: |
         echo compiling Oscam
         make USE_SSL=1 USE_LIBUSB=1
