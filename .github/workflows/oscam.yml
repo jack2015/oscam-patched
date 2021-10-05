@@ -24,6 +24,9 @@ jobs:
         sudo apt-get -q update
         sudo apt-get install dialog xz-utils gawk subversion gcc make libusb-dev libusb-1.0-0 libusb-1.0-0-dev libssl-dev libpcsclite-dev libccid libc6-dev zlib1g-dev build-essential gcc-multilib module-assistant tofrodos sshpass openssl
     - name: build Oscam
+      env: 
+        CC: "gcc-${{ matrix.gcc }}"
+        CXX: "g++-${{ matrix.gcc }}"
       run: |
         echo compiling Oscam
         make USE_SSL=1 USE_LIBUSB=1
