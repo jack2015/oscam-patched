@@ -11,13 +11,22 @@
 #include <specstrings.h>
 #include <WinSCard.h>
 #define  PCSC_SHARED_LIBRARY "winscard.dll"
-#else
+#endif
+
+#if !defined(__CYGWIN__)
+#if !defined(__APPLE__)
 #include <PCSC/pcsclite.h>
 #include <PCSC/winscard.h>
 #include <PCSC/wintypes.h>
-#if !defined(__APPLE__)
 #include <PCSC/reader.h>
 #endif
+#endif
+
+#if defined(__APPLE__)
+#include "pcsclite.h"
+#include "winscard.h"
+#include "wintypes.h"
+#include "reader.h"
 #define  PCSC_SHARED_LIBRARY		"libpcsclite.so"
 #define  PCSC_SHARED_LIBRARY_ALTERNATE	"libpcsclite.so.1"
 #endif

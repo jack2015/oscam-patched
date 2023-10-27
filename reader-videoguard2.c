@@ -1099,6 +1099,17 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		}
 	}
 
+	if(reader->ins42[0x25])
+	{
+		static const uint8_t ins42[5] = { 0xD1, 0x42, 0x00, 0x00, 0x25 };
+		l = do_cmd(reader, ins42, reader->ins42, NULL, cta_res);
+		if(l < 0 || !status_ok(cta_res))
+		{
+			rdr_log(reader, "classD1 ins42: failed");
+			return ERROR;
+		}
+	}
+
 	// get PIN settings
 	static const uint8_t ins7411[5] = { 0xD1, 0x74, 0x11, 0x00, 0x00 };
 	uint8_t payload2e4[4];
