@@ -455,7 +455,6 @@ print_components() {
 	done
 
 	cp -f $tempfileconfig $configfile
-		WITH_EXTENDED_CW	"DVB API EXTENDED CW API"				$(check_test "WITH_EXTENDED_CW") \
 }
 
 menu_addons() {
@@ -465,8 +464,8 @@ menu_addons() {
 		WEBIF_JQUERY		"Jquery onboard (if disabled webload)"	$(check_test "WEBIF_JQUERY") \
 		TOUCH			"Touch Web Interface"			$(check_test "TOUCH") \
 		WITH_SSL		"OpenSSL support"			$(check_test "WITH_SSL") \
-		CS_CACHEEX_AIO		"Cache exchange aio (depend on Cache exchange)"			$(check_test "CS_CACHEEX_AIO") \
 		HAVE_DVBAPI		"DVB API"				$(check_test "HAVE_DVBAPI") \
+		WITH_EXTENDED_CW	"DVB API EXTENDED CW API"		$(check_test "WITH_EXTENDED_CW") \
 		WITH_NEUTRINO		"Neutrino support"			$(check_test "WITH_NEUTRINO") \
 		READ_SDT_CHARSETS	"DVB API read-sdt charsets"		$(check_test "READ_SDT_CHARSETS") \
 		IRDETO_GUESSING		"Irdeto guessing"			$(check_test "IRDETO_GUESSING") \
@@ -475,6 +474,7 @@ menu_addons() {
 		MODULE_MONITOR		"Monitor"				$(check_test "MODULE_MONITOR") \
 		WITH_LB			"Loadbalancing"				$(check_test "WITH_LB") \
 		CS_CACHEEX		"Cache exchange"			$(check_test "CS_CACHEEX") \
+		CS_CACHEEX_AIO		"Cache exchange aio (depend on Cache exchange)"	$(check_test "CS_CACHEEX_AIO") \
 		CW_CYCLE_CHECK		"CW Cycle Check"			$(check_test "CW_CYCLE_CHECK") \
 		LCDSUPPORT		"LCD support"				$(check_test "LCDSUPPORT") \
 		LEDSUPPORT		"LED support"				$(check_test "LEDSUPPORT") \
@@ -482,7 +482,7 @@ menu_addons() {
 		IPV6SUPPORT		"IPv6 support (experimental)"		$(check_test "IPV6SUPPORT") \
 		WITH_ANDROID		"ANDROID API SORPORT"			$(check_test "WITH_ANDROID") \
 		WITH_EMU		"Emulator support"			$(check_test "WITH_EMU") \
-		WITH_SOFTCAM		"Built-in SoftCam.Key"					$(check_test "WITH_SOFTCAM") \
+		WITH_SOFTCAM		"Built-in SoftCam.Key"			$(check_test "WITH_SOFTCAM") \
 		2> ${tempfile}
 
 	opt=${?}
